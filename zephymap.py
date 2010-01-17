@@ -1,9 +1,11 @@
 import ConfigParser, os.path
 import sys
-import imaplib
+from emailparser import EmailParser
+import zephyr
 
 config_file = "~/.zephymap.conf"
 
+zephyr.init()
 scp = ConfigParser.SafeConfigParser()
 if (scp.read(os.path.expanduser(config_file)) == []):
     print "Failed to read config file at %s." % config_file
@@ -11,33 +13,27 @@ if (scp.read(os.path.expanduser(config_file)) == []):
 
 servers = {}
 
-# TODO: global settings
+target = scp.get("zephyr", "recipient")
+
 for section in scp.sections(): # loop through accounts
+    if section == "zephyr": continue # zephyr is for globals
     username = scp.get(section, "username")
     password = scp.get(section, "password")
     server = scp.get(section, "server")
     # TODO: support other ports
 
-    # determine whether to use
-    if scp.has_option(section, "ssl") and scp.getboolean(section, "ssl"):
-        constructor = imaplib.IMAP4_SSL
-    else:
-        constructor = imaplib.IMAP4
-   
-    imap = constructor(server)
-    imap.login(username, password)
-    servers[section] = imap
+    # determine whether to use ssl
+    ssl = scp.has_option(section, "ssl") and scp.getboolean(section, "ssl")
     
-def check(server):
-    # grab the folder list. I'm truly sorry for this code.
-    folders = map(lambda x: x.split(' ')[2].strip('"'), server.list()[1])
-    unread = {}
-    is_gmail = False
-    for folder in folders:
-        if "[Gmail]" in folder: continue # skip Gmail special folders
-        if server.select(folder, True)[0] == "NO": continue # open read-only
-        unseens = server.search(None, "UNSEEN")[1][0]
-        n_unseen = len(unseens.split(' '))
-        unread[folder] = n_unseen
+    servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl)    
 
-    return unread
+
+while True:
+    for server in servers:
+        msgs = servers[server].check()
+        for msg in msgs:
+            print msg
+            zephyr.ZNotice(cls="zephymap", instance=msg["folder"], fields=["zephymap!", "New mail from %s." % msg["from"]],
+                           recipient=target, sender="zephymap", isPrivate=True).send()
+
+    time.sleep(5)
