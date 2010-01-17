@@ -20,6 +20,7 @@ class EmailParser:
     def set_last_uids(self):
         self.last_uid = {}
         for folder in self.get_folders():
+            if "[Gmail]" in folder: continue
             print "running on %s" % folder
             selection = self.imap.select(folder, True) # open read-only
             if selection[0] == "NO": continue
