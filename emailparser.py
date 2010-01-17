@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import imaplib, time, email.utils, email.parser, calendar
+import re
 
 
 class EmailParser:
@@ -15,6 +16,11 @@ class EmailParser:
         self.imap.login(username, password)
         self.last_check = last_check
 
+
+    def get_folders(self):
+        folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
+        return [folder_re.match(f_str).groups()[0].strip('"') for f_str in self.imap.list()[1]]
+    
     def is_new(self, mail_string):
         """ Takes a string of the form
         
@@ -37,7 +43,7 @@ class EmailParser:
         Check for messages received since the last check.
         Return the number of unread messages.
         """
-        folders = map(lambda x: x.split('\"/\" ')[1].strip('"'), self.imap.list()[1])
+        folders = self.get_folders()
         headers = []
         for folder in folders:
             if "[Gmail]" in folder: continue
