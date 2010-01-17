@@ -53,14 +53,19 @@ class EmailParser:
             indices = ','.join(unseen[0].split())
             # for some reason, I get )s mixed in with actual header/response pair information.
             new_headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (DATE FROM SUBJECT)])")[1] if x != ')' and self.is_new(x[1])]
+            
+            new_headers = map(parse_headers,new_headers)
+            for new_header in new_headers: new_header["folder"] = folder
             headers += new_headers
             
         self.last_check = time.time()
         return headers
 
+def parse_headers(header):
+    return {"from": get_field("from", header), "subject" : get_field("subject", header)}
 def get_field(name, field_string):
     fields = filter(lambda x: x.startswith(name.capitalize() + ":"), field_string.split("\r\n"))
     if fields == []: return None
-    else: return fields[0].lstrip(name.capitalize() + ": ")            
+    else: return fields[0].replace(name.capitalize() + ": ", "", 1)
                 
                 
