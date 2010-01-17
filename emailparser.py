@@ -39,6 +39,7 @@ class EmailParser:
         """
         folders = map(lambda x: x.split(' ')[2].strip('"'), self.imap.list()[1])
         headers = []
+        
         for folder in folders:
             if "[Gmail]" in folder: continue
             if self.imap.select(folder, True)[0] == "NO": continue # open read-only
@@ -47,8 +48,7 @@ class EmailParser:
             indices = ','.join(unseen[0].split())
             print folder
             # for some reason, I get )s mixed in with actual header/response pair information.
-            headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (DATE FROM SUBJECT)])")[1] if x != ')']
-            new_headers = filter(self.is_new, headers)
+            new_headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (DATE FROM SUBJECT)])")[1] if x != ')' and self.is_new(x[1])]
             headers += new_headers
             
         self.last_check = time.time()
