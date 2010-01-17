@@ -18,6 +18,7 @@ class EmailParser:
 
 
     def get_folders(self):
+        # folders are indicated like (\\HasNoChildren) "." "INBOX.Foo"; we just want INBOX.Foo
         folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
         return [folder_re.match(f_str).groups()[0].strip('"') for f_str in self.imap.list()[1]]
     
@@ -49,6 +50,7 @@ class EmailParser:
             if "[Gmail]" in folder: continue
             if self.imap.select(folder, True)[0] == "NO": continue # open read-only
             throwaway, unseen = self.imap.search(None, 'UNSEEN')
+            # no point in checking all-read folders
             if unseen == ['']: continue
             indices = ','.join(unseen[0].split())
             # for some reason, I get )s mixed in with actual header/response pair information.
@@ -63,7 +65,8 @@ class EmailParser:
 
 def parse_headers(header):
     return {"from": get_field("from", header), "subject" : get_field("subject", header)}
-def get_field(name, field_string):
+
+def get_field(name, field_string): # TODO: replace this with a real e-mail parser
     fields = filter(lambda x: x.startswith(name.capitalize() + ":"), field_string.split("\r\n"))
     if fields == []: return None
     else: return fields[0].replace(name.capitalize() + ": ", "", 1)
