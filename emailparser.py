@@ -44,7 +44,8 @@ class EmailParser:
         headers = []
         for folder in self.get_folders():
             if "[Gmail]" in folder: continue
-            if self.imap.select(folder, True)[0] == "NO": continue # open read-only
+            response, [nmesgs] = self.imap.select(folder, True)
+            if response == "NO": continue # open read-only
             # XXX: large number is because * will always return the last message
             throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
             if new == ['']: continue # skip all-read folders
@@ -53,8 +54,9 @@ class EmailParser:
             new_headers = [parse_headers(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")[1] if x != ')']
             for new_header in new_headers: new_header["folder"] = folder
             headers += new_headers
+            uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
+            self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
             
-        self.set_last_uids()
         return headers
 
 def parse_headers(header):
