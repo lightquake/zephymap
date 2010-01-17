@@ -24,7 +24,7 @@ class EmailParser:
             selection = self.imap.select(folder, True) # open read-only
             if selection[0] == "NO": continue
             if selection[1][0] == '0':
-                self.last_uid[folder] = -1
+                self.last_uid[folder] = 0
                 continue
             last_msgid = selection[1][0]
             uid_text = self.imap.fetch(last_msgid, "UID")[1][0]
@@ -33,42 +33,25 @@ class EmailParser:
     def get_folders(self):
         folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
         return [folder_re.match(f_str).groups()[0].strip('"') for f_str in self.imap.list()[1]]
-    
-    def is_new(self, mail_string):
-        """ Takes a string of the form
-        
-        Date: Sun, 17 Jan 2010 00:59:10 -0500 (EST)
-        From: John Doe <anyman@example.com>
-        Subject: TPS reports
-
-        and returns whether that e-mail was received since last check.
-        """
-        date_header = get_field("Date", mail_string)
-        date_tuple = email.utils.parsedate_tz(date_header)
-        #timezone fuckery due to parsedate not interpreting other timezones properly
-        time_received = calendar.timegm(date_tuple[0:8]) - date_tuple[9]
-        return time_received > self.last_check
-    
-
         
     def check(self):
         """
         Check for messages received since the last check.
         Return the number of unread messages.
         """
-        folders = self.get_folders()
         headers = []
-        for folder in folders:
+        for folder in self.get_folders():
             if "[Gmail]" in folder: continue
             if self.imap.select(folder, True)[0] == "NO": continue # open read-only
-            throwaway, unseen = self.imap.search(None, 'UNSEEN')
-            if unseen == ['']: continue
-            indices = ','.join(unseen[0].split())
+            throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
+            # XXX: large number is because * will always return the last message
+            if new == ['']: continue
+            indices = ','.join(new[0].split(' '))
             # for some reason, I get )s mixed in with actual header/response pair information.
-            new_headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (DATE FROM SUBJECT)])")[1] if x != ')' and self.is_new(x[1])]
+            new_headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")[1] if x != ')']
             headers += new_headers
             
-        self.last_check = time.time()
+        self.set_last_uids()
         return headers
 
 def get_field(name, field_string):
