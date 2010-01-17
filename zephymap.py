@@ -36,4 +36,4 @@ while True:
             zephyr.ZNotice(cls="zephymap", instance=msg["folder"], fields=["zephymap!", "New mail from %s." % msg["from"]],
                            recipient=target, sender="zephymap", isPrivate=True).send()
 
-    time.sleep(5)
+    time.sleep(30)
