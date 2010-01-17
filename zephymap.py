@@ -2,6 +2,7 @@ import ConfigParser, os.path
 import sys
 from emailparser import EmailParser
 import zephyr
+import time
 
 config_file = "~/.zephymap.conf"
 
