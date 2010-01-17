@@ -14,6 +14,23 @@ class EmailParser:
         else: self.imap = imaplib.IMAP4_SSL(self.server, self.port)
         self.imap.login(username, password)
         self.last_check = last_check
+
+    def is_new(self, mail_string):
+        """ Takes a string of the form
+        
+        Date: Sun, 17 Jan 2010 00:59:10 -0500 (EST)
+        From: John Doe <anyman@example.com>
+        Subject: TPS reports
+
+        and returns whether that e-mail was received since last check.
+        """
+        date_header = get_field("Date", mail_string)
+        date_tuple = email.utils.parsedate_tz(date_header)
+        time_received = calendar.timegm(date_tuple[0:8]) - date_tuple[9]
+        return time_received > self.last_check
+    
+
+        
     def check(self):
         """
         Check for messages received since the last check.
@@ -28,7 +45,6 @@ class EmailParser:
             indices = unseen[0].split()
             nmessages = len(indices)
             i = nmessages - 1
-            
             while i >= 0:
                 # Fetch the received date and remove the preceding 'Date: '
                 rfc2822 = self.imap.fetch(indices[i], '(BODY[HEADER.FIELDS (DATE)])')[1][0][1][6:]
@@ -41,3 +57,10 @@ class EmailParser:
                 i -= 1
         self.last_check = time.time()
         return notifications
+
+def get_field(name, field_string):
+    fields = filter(lambda x: x.startswith(name.capitalize() + ":"), field_string.split("\r\n"))
+    if fields == []: return None
+    else: return fields[0].lstrip(name.capitalize() + ": ")            
+                
+                
