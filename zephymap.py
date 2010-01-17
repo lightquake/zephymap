@@ -5,6 +5,7 @@ import zephyr
 import time
 
 config_file = "~/.zephymap.conf"
+global_section = "zephyr"
 
 zephyr.init()
 scp = ConfigParser.SafeConfigParser()
@@ -14,10 +15,13 @@ if (scp.read(os.path.expanduser(config_file)) == []):
 
 servers = {}
 
-target = scp.get("zephyr", "recipient")
+target = scp.get(global_section, "recipient")
+target_cls = "MAIL"
+if scp.has_option(global_section, "class"):
+    target_cls = scp.get(global_section, "class")
 
 for section in scp.sections(): # loop through accounts
-    if section == "zephyr": continue # zephyr is for globals
+    if section == global_section: continue # zephyr is for globals
     username = scp.get(section, "username")
     password = scp.get(section, "password")
     server = scp.get(section, "server")
@@ -31,10 +35,13 @@ for section in scp.sections(): # loop through accounts
 
 while True:
     for server in servers:
+        print "Checking server %s." % server
         msgs = servers[server].check()
         for msg in msgs:
             print msg
-            zephyr.ZNotice(cls="zephymap", instance=msg["folder"], fields=["zephymap!", "New mail from %s." % msg["from"]],
+            instance_name = "%s.%s" % (server, msg["folder"]) # gmail.INBOX
+            zephyr.ZNotice(cls=target_cls, instance=msg["folder"], fields=["zephymap!",
+                           "New mail from %s.\nSubject: %s" % (msg["from"], msg["subject"])],
                            recipient=target, sender="zephymap", isPrivate=True).send()
 
-    time.sleep(30)
+    time.sleep(20)
