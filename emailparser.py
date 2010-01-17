@@ -15,8 +15,21 @@ class EmailParser:
         else: self.imap = imaplib.IMAP4(self.server, self.port)
         self.imap.login(username, password)
         self.last_check = last_check
-
-
+        self.set_last_uids()
+        
+    def set_last_uids(self):
+        self.last_uid = {}
+        for folder in self.get_folders():
+            print "running on %s" % folder
+            selection = self.imap.select(folder, True) # open read-only
+            if selection[0] == "NO": continue
+            if selection[1][0] == '0':
+                self.last_uid[folder] = -1
+                continue
+            last_msgid = selection[1][0]
+            uid_text = self.imap.fetch(last_msgid, "UID")[1][0]
+            self.last_uid[folder] = int(re.search("\(UID (\d+)\)", uid_text).group(1))
+            
     def get_folders(self):
         folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
         return [folder_re.match(f_str).groups()[0].strip('"') for f_str in self.imap.list()[1]]
