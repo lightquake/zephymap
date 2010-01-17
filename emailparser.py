@@ -11,7 +11,7 @@ class EmailParser:
         else:
             self.port = port
         if use_ssl: self.imap = imaplib.IMAP4_SSL(self.server, self.port)
-        else: self.imap = imaplib.IMAP4_SSL(self.server, self.port)
+        else: self.imap = imaplib.IMAP4(self.server, self.port)
         self.imap.login(username, password)
         self.last_check = last_check
 
@@ -37,16 +37,14 @@ class EmailParser:
         Check for messages received since the last check.
         Return the number of unread messages.
         """
-        folders = map(lambda x: x.split(' ')[2].strip('"'), self.imap.list()[1])
+        folders = map(lambda x: x.split('\"/\" ')[1].strip('"'), self.imap.list()[1])
         headers = []
-        
         for folder in folders:
             if "[Gmail]" in folder: continue
             if self.imap.select(folder, True)[0] == "NO": continue # open read-only
             throwaway, unseen = self.imap.search(None, 'UNSEEN')
             if unseen == ['']: continue
             indices = ','.join(unseen[0].split())
-            print folder
             # for some reason, I get )s mixed in with actual header/response pair information.
             new_headers = [x[1] for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (DATE FROM SUBJECT)])")[1] if x != ')' and self.is_new(x[1])]
             headers += new_headers
