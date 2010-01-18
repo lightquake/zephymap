@@ -21,7 +21,6 @@ class EmailParser:
         self.last_uid = {}
         for folder in self.get_folders():
             if "[Gmail]" in folder: continue
-            print "running on %s" % folder
             selection = self.imap.select(folder, True) # open read-only
             if selection[0] == "NO": continue
             if selection[1][0] == '0':
@@ -49,6 +48,7 @@ class EmailParser:
             # XXX: large number is because * will always return the last message
             throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
             if new == ['']: continue # skip all-read folders
+            print "Checking folder %s at %s." % (folder, time.asctime())
             indices = ','.join(new[0].split(' '))
             # for some reason, I get )s mixed in with actual header/response pair information.
             new_headers = [parse_headers(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")[1] if x != ')']
