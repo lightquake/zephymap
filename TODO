@@ -1,6 +1,6 @@
 Todo for 0.0.2
 
-Just show the inbox
+inbox filtering
 # show all the folders a message got in
 
 Todo for 0.0.3
@@ -8,7 +8,7 @@ fix delete/undelete behavior
 
 Todo for 0.1
 
-inbox filtering
+daemonization
 customize notifications
 
 Todo for 0.2
