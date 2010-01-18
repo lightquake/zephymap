@@ -8,6 +8,10 @@ fix delete/undelete behavior
 
 Todo for 0.1
 
+auto-choose SSL/non-SSL
 inbox filtering
 customize notifications
+
+Todo for 0.2
+
 better polling
