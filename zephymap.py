@@ -28,7 +28,9 @@ for section in scp.sections(): # loop through accounts
     # TODO: support other ports
 
     # determine whether to use ssl
-    ssl = scp.has_option(section, "ssl") and scp.getboolean(section, "ssl")
+    ssl = True
+    if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
+        ssl = False
     
     servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl)    
 
