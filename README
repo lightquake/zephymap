@@ -1,5 +1,12 @@
 Pronounced /'zɛfiːmæp/ or ZE-fee-map.
 
+This requires python-zephyr, which you can get via
+
+git checkout git://github.com/ebroder/python-zephyr.git
+
+or alternately, via
+
+easy_install PyZephyr
 
 To set up, create a configuration file of the format:
 
