@@ -8,7 +8,8 @@ or alternately, via
 
 easy_install PyZephyr
 
-To set up, create a configuration file of the format:
+To set up, create a configuration file named .zephymap.conf in your home directory
+of the format:
 
 [Global]
 recipient: phurst
