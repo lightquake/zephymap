@@ -4,9 +4,11 @@ This requires python-zephyr, which you can get via
 
 git checkout git://github.com/ebroder/python-zephyr.git
 
-or alternately, via
+or
 
-easy_install PyZephyr
+http://github.com/ebroder/python-zephyr/downloads
+
+for stable tagged builds. This will require libzephyr-dev.
 
 To set up, create a configuration file named .zephymap.conf in your home directory
 of the format:
