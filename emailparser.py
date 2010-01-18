@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import imaplib, time, email.utils, email.parser, calendar
+import imaplib, time, email.utils, email, calendar
 import re
 
 
@@ -51,12 +51,13 @@ class EmailParser:
             print "Checking folder %s at %s." % (folder, time.asctime())
             indices = ','.join(new[0].split(' '))
             # for some reason, I get )s mixed in with actual header/response pair information.
-            new_headers = [parse_headers(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER.FIELDS (FROM SUBJECT)])")[1] if x != ')']
+            new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
             for new_header in new_headers: new_header["folder"] = folder
             headers += new_headers
             uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
             self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
-            
+
+        headers = uniqify(headers, lambda x: x["Message-ID"])
         return headers
 
 def parse_headers(header):
@@ -66,5 +67,15 @@ def get_field(name, field_string): # TODO: replace this with a real e-mail parse
     fields = filter(lambda x: x.startswith(name.capitalize() + ":"), field_string.split("\r\n"))
     if fields == []: return None
     else: return fields[0].replace(name.capitalize() + ": ", "", 1)
-                
+
+def uniqify(things, f):
+    uniques = []
+    seen = {}
+    for thing in things:
+        if not f(thing) in seen:
+            seen[f(thing)] = True
+            uniques.append(thing)
+        else:
+            continue
+    return uniques
                 

@@ -35,13 +35,13 @@ for section in scp.sections(): # loop through accounts
 
 while True:
     for server in servers:
-        print "Checking server %s." % server
+        print "Checking server %s at %s." % (server, time.asctime())
         msgs = servers[server].check()
         for msg in msgs:
             print msg
             instance_name = "%s.%s" % (server, msg["folder"]) # gmail.INBOX
             zephyr.ZNotice(cls=target_cls, instance=msg["folder"], fields=["zephymap!",
-                           "New mail from %s.\nSubject: %s" % (msg["from"], msg["subject"])],
+                           "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])],
                            recipient=target, sender="zephymap", isPrivate=True).send()
 
     time.sleep(20)
