@@ -4,6 +4,13 @@ from emailparser import EmailParser
 import zephyr
 import time
 
+
+def group_by_id(things, f):
+    f_dict = {}
+    for f_val in list(set(map(f, things))):
+        f_dict[f_val] = [thing for thing in things if f(thing) == f_val]
+    return f_dict
+
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
@@ -39,11 +46,18 @@ while True:
     for server in servers:
         print "Checking server %s at %s." % (server, time.asctime())
         msgs = servers[server].check()
-        for msg in msgs:
+        msg_groups = group_by_id(msgs, lambda x: x["Message-ID"])
+        print msgs
+        for msg_id in msg_groups:
+            msg_group = msg_groups[msg_id]
+            folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
+            msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
             print msg
-            instance_name = "%s.%s" % (server, msg["folder"]) # gmail.INBOX
-            zephyr.ZNotice(cls=target_cls, instance=msg["folder"], fields=["zephymap!",
+            instance_name = "%s.%s" % (server, folders) # gmail.INBOX
+            zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=["zephymap!",
                            "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])],
                            recipient=target, sender="zephymap", isPrivate=True).send()
 
     time.sleep(20)
+
+

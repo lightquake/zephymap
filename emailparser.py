@@ -56,8 +56,6 @@ class EmailParser:
             headers += new_headers
             uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
             self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
-
-        headers = uniqify(headers, lambda x: x["Message-ID"])
         return headers
 
 def parse_headers(header):
@@ -68,14 +66,3 @@ def get_field(name, field_string): # TODO: replace this with a real e-mail parse
     if fields == []: return None
     else: return fields[0].replace(name.capitalize() + ": ", "", 1)
 
-def uniqify(things, f):
-    uniques = []
-    seen = {}
-    for thing in things:
-        if not f(thing) in seen:
-            seen[f(thing)] = True
-            uniques.append(thing)
-        else:
-            continue
-    return uniques
-                
