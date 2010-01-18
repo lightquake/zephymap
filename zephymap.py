@@ -52,7 +52,6 @@ while True:
             msg_group = msg_groups[msg_id]
             folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
             msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
-            print msg
             instance_name = "%s.%s" % (server, folders) # gmail.INBOX
             zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=["zephymap!",
                            "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])],
