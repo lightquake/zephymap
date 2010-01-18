@@ -1,1 +1,22 @@
 Pronounced /'zɛfiːmæp/ or ZE-fee-map.
+
+
+To set up, create a configuration file of the format:
+
+[Global]
+recipient: phurst
+[mailbox 1]
+server: imap.foo.com
+username: username1
+password: password1
+[Mailbox 2]
+server: imap.baz.com
+username: username2
+password: password2
+ssl: true
+
+
+note that SSL will default to being disabled. option names are case-insensitive,
+but the special section Global must be capitalized as such. there is also the
+optional class setting in the Global section, which configures the class that you
+will receive mail in. It defaults to MAIL.
