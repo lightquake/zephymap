@@ -1,3 +1,12 @@
+Version 0.0.2
+----------------------------------------------
+* SSL now default
+* Supports messages in multiple folders
+  (e.g., gmail tags)
+* Filter messages by regex
+* Fix various typos in the README
+
 Version 0.0.1
 ----------------------------------------------
 * Initial release!
+
