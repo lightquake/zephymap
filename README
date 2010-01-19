@@ -35,4 +35,7 @@ will receive mail in. It defaults to MAIL.
 The regex option in the zephyr section will be matched against the entire folder name;
 depending on your IMAP server, subfolders may be separated with /, ., or something
 even more exotic. Gmail uses / (e.g., Lists/Reuse); I think MIT uses . (e.g., SIPB.private)
-
+Note that you can always just zpunt instances for mailboxes that you don't care about;
+this is probably better if you only have one instance/folder that you don't care about.
+Similarly, only subscribing to a specific instance might be easier to manage, as well as
+dynamically changeable (there is currently no way to tell zephymap to reload its config file.)
