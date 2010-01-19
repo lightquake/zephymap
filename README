@@ -14,7 +14,7 @@ may or may not in turn require comerr-dev.
 To set up, create a configuration file named .zephymap.conf in your home directory
 of the format:
 
-[Global]
+[zephyr]
 recipient: phurst
 [mailbox 1]
 server: imap.foo.com
@@ -28,6 +28,6 @@ ssl: true
 
 
 note that SSL will default to being disabled. option names are case-insensitive,
-but the special section Global must be capitalized as such. there is also the
-optional class setting in the Global section, which configures the class that you
+but the special section zephyr must be capitalized as such. there is also the
+optional class setting in the zephyr section, which configures the class that you
 will receive mail in. It defaults to MAIL.
