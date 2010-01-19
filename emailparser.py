@@ -8,7 +8,7 @@ class EmailParser:
         self.server = server
         if not port:
             if use_ssl: self.port = 993
-            else: self.port = 110
+            else: self.port = 143
         else:
             self.port = port
         if use_ssl: self.imap = imaplib.IMAP4_SSL(self.server, self.port)
