@@ -15,7 +15,7 @@ config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
 zephyr.init()
-scp = ConfigParser.SafeConfigParser()
+scp = ConfigParser.SafeConfigParser({"regex": ".*"})
 if (scp.read(os.path.expanduser(config_file)) == []):
     print "Failed to read config file at %s." % config_file
     sys.exit(1)
@@ -32,6 +32,7 @@ for section in scp.sections(): # loop through accounts
     username = scp.get(section, "username")
     password = scp.get(section, "password")
     server = scp.get(section, "server")
+    regex = scp.get(section, "regex")
     # TODO: support other ports
 
     # determine whether to use ssl
@@ -39,7 +40,7 @@ for section in scp.sections(): # loop through accounts
     if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
         ssl = False
     
-    servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl)    
+    servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl, regex=regex)    
 
 
 while True:
@@ -47,7 +48,8 @@ while True:
         print "Checking server %s at %s." % (server, time.asctime())
         msgs = servers[server].check()
         msg_groups = group_by_id(msgs, lambda x: x["Message-ID"])
-        print msgs
+        n_mesgs = len(msg_groups)
+        print "%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s")
         for msg_id in msg_groups:
             msg_group = msg_groups[msg_id]
             folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in

@@ -4,7 +4,7 @@ import re
 
 
 class EmailParser:
-    def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time()):
+    def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time(), regex=".*"):
         self.server = server
         if not port:
             if use_ssl: self.port = 993
@@ -15,6 +15,7 @@ class EmailParser:
         else: self.imap = imaplib.IMAP4(self.server, self.port)
         self.imap.login(username, password)
         self.last_check = last_check
+        self.regex = regex
         self.set_last_uids()
         
     def set_last_uids(self):
@@ -33,8 +34,11 @@ class EmailParser:
     def get_folders(self):
         # folders are indicated like (\\HasNoChildren) "." "INBOX.Foo"; we just want INBOX.Foo
         folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
-        return [folder_re.match(f_str).groups()[0].strip('"') for f_str in self.imap.list()[1]]
-        
+        predicate_re = re.compile(self.regex)
+        folders = [folder_re.match(f_str).groups()[0].strip('"')
+                for f_str in self.imap.list()[1]]
+        return [f for f in folders if predicate_re.match(f)]
+    
     def check(self):
         """
         Check for messages received since the last check.
