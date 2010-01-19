@@ -61,12 +61,3 @@ class EmailParser:
             uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
             self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
         return headers
-
-def parse_headers(header):
-    return {"from": get_field("from", header), "subject" : get_field("subject", header)}
-
-def get_field(name, field_string): # TODO: replace this with a real e-mail parser
-    fields = filter(lambda x: x.startswith(name.capitalize() + ":"), field_string.split("\r\n"))
-    if fields == []: return None
-    else: return fields[0].replace(name.capitalize() + ": ", "", 1)
-
