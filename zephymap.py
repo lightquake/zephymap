@@ -3,7 +3,7 @@ import sys
 from emailparser import EmailParser
 import zephyr
 import time
-
+import getpass
 
 def group_by_id(things, f):
     f_dict = {}
@@ -30,8 +30,11 @@ if scp.has_option(global_section, "class"):
 for section in scp.sections(): # loop through accounts
     if section == global_section: continue # zephyr is for globals
     username = scp.get(section, "username")
-    password = scp.get(section, "password")
     server = scp.get(section, "server")
+    if scp.has_option(section, "password"):
+        password = scp.get(section, "password")
+    else:
+        password = getpass.getpass("Password for server %s, username %s: " % (server, username))
     regex = scp.get(section, "regex")
     # TODO: support other ports
 
