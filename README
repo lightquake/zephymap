@@ -41,3 +41,6 @@ Note that you can always just zpunt instances for mailboxes that you don't care 
 this is probably better if you only have one instance/folder that you don't care about.
 Similarly, only subscribing to a specific instance might be easier to manage, as well as
 dynamically changeable (there is currently no way to tell zephymap to reload its config file.)
+
+
+Contact me at zephymap@mit.edu or on (MIT) zephyr via the zephymap class.
