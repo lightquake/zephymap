@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import ConfigParser, os.path
 import sys
 from emailparser import EmailParser
