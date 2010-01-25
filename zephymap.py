@@ -15,6 +15,9 @@ config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
 def load_servers():
+    global target_cls
+    global target
+    
     scp = ConfigParser.SafeConfigParser({"regex": ".*"})
     if (scp.read(os.path.expanduser(config_file)) == []):
         print "Failed to read config file at %s." % config_file
@@ -47,24 +50,26 @@ def load_servers():
 
     return servers
 
-
+def check_server(server):
+    print "Checking server %s at %s." % (server, time.asctime())
+    msgs = servers[server].check()
+    msg_groups = group_by_id(msgs, lambda x: x["Message-ID"])
+    n_mesgs = len(msg_groups)
+    print "%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s")
+    for msg_id in msg_groups:
+        msg_group = msg_groups[msg_id]
+        folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
+        msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
+        instance_name = "%s.%s" % (server, folders) # gmail.INBOX
+        body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
+        zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=[msg_id, body],
+                       recipient=target, sender="zephymap", isPrivate=True).send()
 if __name__ == "__main__":
     zephyr.init()
     servers = load_servers()
     while True:
+        
         for server in servers:
-            print "Checking server %s at %s." % (server, time.asctime())
-            msgs = servers[server].check()
-            msg_groups = group_by_id(msgs, lambda x: x["Message-ID"])
-            n_mesgs = len(msg_groups)
-            print "%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s")
-            for msg_id in msg_groups:
-                msg_group = msg_groups[msg_id]
-                folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
-                msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
-                instance_name = "%s.%s" % (server, folders) # gmail.INBOX
-                zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=[msg_id,
-                               "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])],
-                               recipient=target, sender="zephymap", isPrivate=True).send()
+            check_server(server)
 
         time.sleep(20)
