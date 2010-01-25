@@ -6,6 +6,8 @@ from emailparser import EmailParser
 import zephyr
 import time
 import getpass
+from multiprocessing import Process
+
 
 def group_by_id(things, f):
     f_dict = {}
@@ -66,6 +68,7 @@ def check_server(server):
         body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
         zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=[msg_id, body],
                        recipient=target, sender="zephymap", isPrivate=True).send()
+        
 if __name__ == "__main__":
     zephyr.init()
     servers = load_servers()
