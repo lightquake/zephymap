@@ -52,7 +52,7 @@ def load_servers():
 
         servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl, regex=regex)
 
-    return servers
+    return servers      
 
 def check_server(server):
     print "Checking server %s at %s." % (server, time.asctime())
@@ -68,18 +68,15 @@ def check_server(server):
         body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
         zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=[msg_id, body],
                        recipient=target, sender="zephymap", isPrivate=True).send()
+def check_loop(server):
+    while True:
+        check_server(server)
+        time.sleep(20)
         
 if __name__ == "__main__":
     zephyr.init()
     servers = load_servers()
-    while True:
-        threads = []
-        for server in servers:
-            t = Thread(target=check_server, args=(server,))
-            t.start()
-            threads.append(t)
 
-        for thread in threads:
-            thread.join()
-
-        time.sleep(20)
+    for server in servers:
+        t = Thread(target=check_loop, args=(server,))
+        t.start()
