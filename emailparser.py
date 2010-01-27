@@ -1,8 +1,9 @@
 #!/usr/bin/python
 import imaplib, time, email.utils, email, calendar
 import re
-
-
+from socket import sslerror
+import sys
+import os
 class EmailParser:
     def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time(), regex=".*"):
         self.server = server
@@ -13,10 +14,13 @@ class EmailParser:
             self.port = port
         if use_ssl: self.imap = imaplib.IMAP4_SSL(self.server, self.port)
         else: self.imap = imaplib.IMAP4(self.server, self.port)
-        self.imap.login(username, password)
+        self.username = username
+        self.password = password
+        self.imap.login(self.username, self.password)
         self.last_check = last_check
         self.regex = regex
         self.set_last_uids()
+        
         
     def set_last_uids(self):
         self.last_uid = {}
@@ -45,19 +49,38 @@ class EmailParser:
         Return the number of unread messages.
         """
         headers = []
-        for folder in self.get_folders():
-            if "[Gmail]" in folder: continue
-            response, [nmesgs] = self.imap.select(folder, True)
-            if response == "NO": continue # open read-only
-            # XXX: large number is because * will always return the last message
-            throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
-            if new == ['']: continue # skip all-read folders
-            print "Checking folder %s at %s." % (folder, time.asctime())
-            indices = ','.join(new[0].split(' '))
-            # for some reason, I get )s mixed in with actual header/response pair information.
-            new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
-            for new_header in new_headers: new_header["folder"] = folder
-            headers += new_headers
-            uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
-            self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
+        try:
+            for folder in self.get_folders():
+                if "[Gmail]" in folder: continue
+                response, [nmesgs] = self.imap.select(folder, True)  # open read-only
+                if response == "NO": continue
+                # XXX: large number is because * will always return the last message
+                throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
+                if new == ['']: continue # skip all-read folders
+                print "Checking folder %s at %s." % (folder, time.asctime())
+                indices = ','.join(new[0].split(' '))
+
+                # for some reason, I get )s mixed in with actual header/response pair information.
+                new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
+                for new_header in new_headers: new_header["folder"] = folder
+                headers += new_headers
+                uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
+                self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
+                
+        except sslerror, e:
+            # Okay. There's this stupid bug in the SSL library that I don't feel like finding the cause of
+            # that means that sometimes I get a random EOF. I don't know what state it leaves the connection
+            # in, so just reinitialize everything.
+            if e[0] != 8:
+                raise
+
+            if isinstance(self.imap, imaplib.IMAP4_SSL):
+                self.imap = imaplib.IMAP4_SSL(self.server)
+            else:
+                self.imap = imaplib.IMAP4(self.server)
+            self.imap.login(self.username, self.password)
+            # sys.stderr.write("SSL bug in server %s at %s.\n" % (self.server, time.asctime()))
+            return self.check()
+            
+            
         return headers
