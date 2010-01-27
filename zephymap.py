@@ -6,7 +6,7 @@ from emailparser import EmailParser
 import zephyr
 import time
 import getpass
-from multiprocessing import Process
+from threading import Thread
 
 
 def group_by_id(things, f):
@@ -73,8 +73,13 @@ if __name__ == "__main__":
     zephyr.init()
     servers = load_servers()
     while True:
-        
+        threads = []
         for server in servers:
-            check_server(server)
+            t = Thread(target=check_server, args=(server,))
+            t.start()
+            threads.append(t)
+
+        for thread in threads:
+            thread.join()
 
         time.sleep(20)
