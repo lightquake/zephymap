@@ -2,8 +2,8 @@
 import imaplib, time, email.utils, email, calendar
 import re
 from socket import sslerror
-import sys
-import os
+from sys import stderr
+
 class EmailParser:
     def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time(), regex=".*"):
         self.server = server
@@ -67,11 +67,12 @@ class EmailParser:
                 uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
                 self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
                 
-        except sslerror, e:
+        except (abort, sslerror), e:
             # Okay. There's this stupid bug in the SSL library that I don't feel like finding the cause of
             # that means that sometimes I get a random EOF. I don't know what state it leaves the connection
             # in, so just reinitialize everything.
-            if e[0] != 8:
+            # Also, sometimes imaplib will just randomly abort. Again, fuck it and reinitialize.
+            if isinstance(e, sslerror) and e[0] != 8:
                 raise
 
             if isinstance(self.imap, imaplib.IMAP4_SSL):
@@ -79,7 +80,10 @@ class EmailParser:
             else:
                 self.imap = imaplib.IMAP4(self.server)
             self.imap.login(self.username, self.password)
-            # sys.stderr.write("SSL bug in server %s at %s.\n" % (self.server, time.asctime()))
+            if isinstance(e, sslerror):
+                print >> stderr, "SSL bug in server %s at %s." % (self.server, time.asctime())
+            elif isinstance(e, abort):
+                print >> stderr, "abort bug in server %s at %s." % (self.server, time.asctime())
             return self.check()
             
             
