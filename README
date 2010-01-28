@@ -13,6 +13,9 @@ http://github.com/ebroder/python-zephyr/downloads
 for stable tagged builds. This will require libzephyr-dev, which
 may or may not in turn require comerr-dev.
 
+**NOTE**: For whatever reason, a SIGINT (Ctrl-C) will not kill zephymap;
+it requires Ctrl-\
+
 To set up, create a configuration file named .zephymap.conf in your home directory
 of the format:
 
