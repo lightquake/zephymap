@@ -1,4 +1,4 @@
-Version 0.0.2
+Version 0.0.3
 
 Pronounced /'zɛfiːmæp/ or ZE-fee-map.
 
@@ -25,14 +25,14 @@ password: password1
 [Mailbox 2]
 server: imap.baz.com
 username: username2
-password: password2
 ssl: true
 
 
 note that SSL will default to being enabled. option names are case-insensitive,
 but the special section zephyr must be capitalized as such. there is also the
 optional class setting in the zephyr section, which configures the class that you
-will receive mail in. It defaults to MAIL.
+will receive mail in. It defaults to MAIL. Omitted password fields will prompt
+you each time you startup; useful for the security-conscious.
 
 The regex option in the zephyr section will be matched against the entire folder name;
 depending on your IMAP server, subfolders may be separated with /, ., or something
@@ -41,6 +41,9 @@ Note that you can always just zpunt instances for mailboxes that you don't care 
 this is probably better if you only have one instance/folder that you don't care about.
 Similarly, only subscribing to a specific instance might be easier to manage, as well as
 dynamically changeable (there is currently no way to tell zephymap to reload its config file.)
+However, this doesn't work as wellfor stuff like Gmail that can tag messages
+into multiple folders; you can't get all messages sent to the Foo folder because
+they might also get into Bar and so the instance would be Gmail.Foo *or* Gmail.Foo,Bar.
 
 
 Contact me at zephymap@mit.edu or on (MIT) zephyr via the zephymap class.

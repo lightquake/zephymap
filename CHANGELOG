@@ -1,3 +1,9 @@
+Version 0.0.3
+----------------------------------------------
+* Fixed a bug that would randomly crash zephymap
+* Threaded out each mailbox checker
+* Allow user to input password at each startup
+
 Version 0.0.2.1
 ----------------------------------------------
 * Proper port for non-SSL
