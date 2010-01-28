@@ -1,3 +1,7 @@
+Version 0.0.3.2
+----------------------------------------------
+* Fix idiotic typo in README related to installing python-zephyr
+
 Version 0.0.3.1
 ----------------------------------------------
 * Added information on how to kill zephymap
