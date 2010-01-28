@@ -67,7 +67,7 @@ class EmailParser:
                 uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
                 self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
                 
-        except (abort, sslerror), e:
+        except (imaplib.IMAP4.abort, sslerror), e:
             # Okay. There's this stupid bug in the SSL library that I don't feel like finding the cause of
             # that means that sometimes I get a random EOF. I don't know what state it leaves the connection
             # in, so just reinitialize everything.
