@@ -1,13 +1,13 @@
 #!/usr/bin/python
-import imaplib, time, email.utils, email, calendar
+import imaplib, email.utils, email, calendar, time
 import re
 from socket import sslerror
 from sys import stderr
 
 class EmailHandler:
-    def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time(), regex=".*"):
+    def __init__(self, server, username, password, port=None, use_ssl=False):
         self.server = server
-        if not port:
+        if not port: # default ports
             if use_ssl: self.port = 993
             else: self.port = 143
         else:
@@ -17,31 +17,36 @@ class EmailHandler:
         self.username = username
         self.password = password
         self.imap.login(self.username, self.password)
-        self.last_check = last_check
-        self.regex = regex
         self.set_last_uids()
         
         
     def set_last_uids(self):
+        """
+        Set the last-seen UIDs for each folder.
+        """
+        
         self.last_uid = {}
         for folder in self.get_folders():
-            if "[Gmail]" in folder: continue
+            if "[Gmail]" in folder: continue # Avoid checking Gmail's special folders.
             selection = self.imap.select(folder, True) # open read-only
             if selection[0] == "NO": continue
-            if selection[1][0] == '0':
+            last_msgid = selection[1][0]
+            if last_msgid == '0': # No messages found.
                 self.last_uid[folder] = 0
                 continue
-            last_msgid = selection[1][0]
-            uid_text = self.imap.fetch(last_msgid, "UID")[1][0]
+            uid_text = self.imap.fetch(last_msgid, "UID")[1][0] # looks like (UID 1234)
             self.last_uid[folder] = int(re.search("\(UID (\d+)\)", uid_text).group(1))
             
     def get_folders(self):
-        # folders are indicated like (\\HasNoChildren) "." "INBOX.Foo"; we just want INBOX.Foo
+        """
+        Get the list of folders.
+        """
+        # folders are indicated like (\\HasNoChildren) "." "INBOX.Foo"; we just want INBOX.Foo.
+        # that middle thing is a separator, which we can ignore since we don't care about nesting.
         folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
-        predicate_re = re.compile(self.regex)
         folders = [folder_re.match(f_str).groups()[0].strip('"')
                 for f_str in self.imap.list()[1]]
-        return [f for f in folders if predicate_re.match(f)]
+        return folders
     
     def check(self):
         """
@@ -58,13 +63,14 @@ class EmailHandler:
                 throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
                 if new == ['']: continue # skip all-read folders
                 print "Checking folder %s at %s." % (folder, time.asctime())
-                indices = ','.join(new[0].split(' '))
+
+                indices = new[0].replace(' ', ',') # it gives me '2 3 4', but it requires '2,3,4'. god I hate IMAP.
 
                 # for some reason, I get )s mixed in with actual header/response pair information.
                 new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
-                for new_header in new_headers: new_header["folder"] = folder
+                for new_header in new_headers: new_header["folder"] = folder # tag with folder information
                 headers += new_headers
-                uid_text = self.imap.fetch(nmesgs, "UID")[1][0]
+                uid_text = self.imap.fetch(nmesgs, "UID")[1][0] # mark that we read the UID
                 self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
                 
         except (imaplib.IMAP4.abort, sslerror), e:
@@ -80,6 +86,7 @@ class EmailHandler:
             else:
                 self.imap = imaplib.IMAP4(self.server)
             self.imap.login(self.username, self.password)
+            
             if isinstance(e, sslerror):
                 print >> stderr, "SSL bug in server %s at %s." % (self.server, time.asctime())
             elif isinstance(e, imaplib.IMAP4.abort):
