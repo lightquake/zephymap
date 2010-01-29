@@ -8,18 +8,11 @@ import time
 import getpass
 from threading import Thread
 
-
-def group_by_id(things, f):
-    f_dict = {}
-    for f_val in list(set(map(f, things))):
-        f_dict[f_val] = [thing for thing in things if f(thing) == f_val]
-    return f_dict
-
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
 def load_servers():
-    global target_cls
+    global target_class
     global target
     
     scp = ConfigParser.SafeConfigParser({"regex": ".*"})
@@ -30,9 +23,9 @@ def load_servers():
     servers = {}
 
     target = scp.get(global_section, "recipient")
-    target_cls = "MAIL"
+    target_class = "MAIL"
     if scp.has_option(global_section, "class"):
-        target_cls = scp.get(global_section, "class")
+        target_class = scp.get(global_section, "class")
 
     for section in scp.sections(): # loop through accounts
         if section == global_section: continue # zephyr is for globals
@@ -66,13 +59,21 @@ def check_server(server):
         msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
         instance_name = "%s.%s" % (server, folders) # gmail.INBOX
         body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
-        zephyr.ZNotice(cls=target_cls, instance=instance_name, fields=[msg_id, body],
+        zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                        recipient=target, sender="zephymap", isPrivate=True).send()
 def check_loop(server):
     while True:
         check_server(server)
         time.sleep(20)
         
+
+def group_by_id(things, f):
+    f_dict = {}
+    for f_val in list(set(map(f, things))):
+        f_dict[f_val] = [thing for thing in things if f(thing) == f_val]
+    return f_dict
+
+
 if __name__ == "__main__":
     zephyr.init()
     servers = load_servers()
