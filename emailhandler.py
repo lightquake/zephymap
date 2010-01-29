@@ -4,7 +4,7 @@ import re
 from socket import sslerror
 from sys import stderr
 
-class EmailParser:
+class EmailHandler:
     def __init__(self, server, username, password, port=None, use_ssl=False, last_check=time.time(), regex=".*"):
         self.server = server
         if not port:

@@ -2,7 +2,7 @@
 
 import ConfigParser, os.path
 import sys
-from emailparser import EmailParser
+from emailhandler import EmailHandler
 import zephyr
 import time
 import getpass
@@ -43,7 +43,7 @@ def load_servers():
         if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
             ssl = False
 
-        servers[section] = EmailParser(server=server, username=username, password=password, use_ssl=ssl, regex=regex)
+        servers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, regex=regex)
 
     return servers      
 
