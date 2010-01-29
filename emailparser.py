@@ -82,7 +82,7 @@ class EmailParser:
             self.imap.login(self.username, self.password)
             if isinstance(e, sslerror):
                 print >> stderr, "SSL bug in server %s at %s." % (self.server, time.asctime())
-            elif isinstance(e, abort):
+            elif isinstance(e, imaplib.IMAP4.abort):
                 print >> stderr, "abort bug in server %s at %s." % (self.server, time.asctime())
             return self.check()
             
