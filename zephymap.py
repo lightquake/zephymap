@@ -8,9 +8,6 @@ import time
 import getpass
 from threading import Thread
 
-config_file = "~/.zephymap.conf"
-global_section = "zephyr"
-
 class EmailThread(Thread):
     def __init__(self, handler, interval=20):
         Thread.__init__(self)
@@ -21,6 +18,9 @@ class EmailThread(Thread):
         while True:
             check_handler(self.handler)
             time.sleep(self.interval)
+
+config_file = "~/.zephymap.conf"
+global_section = "zephyr"
 
 def load_config():
     """
