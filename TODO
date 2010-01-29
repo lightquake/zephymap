@@ -5,7 +5,7 @@ Todo for 0.1
 * Read README
 * Properly commented code
 * Configurable sleep timer
-
+* Support non-standard IMAP/SSL ports
 Todo for 0.2
 
 * Daemonization
