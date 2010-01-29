@@ -11,6 +11,17 @@ from threading import Thread
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
+class EmailThread(Thread):
+    def __init__(self, handler, interval=20):
+        Thread.__init__(self)
+        self.handler = handler
+        self.interval = interval
+
+    def run(self):
+        while True:
+            check_handler(self.handler)
+            time.sleep(self.interval)
+
 def load_config():
     """
     Load handlers and other appropriate state.
@@ -76,11 +87,6 @@ def check_handler(handler):
         zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                        recipient=target, sender="zephymap", isPrivate=True).send()
         
-def check_loop(handler):
-    while True:
-        check_handler(handler)
-        time.sleep(20)
-        
 
 def group(things, f):
     f_dict = {}
@@ -95,5 +101,5 @@ if __name__ == "__main__":
     handlers = load_config()
 
     for handler in handlers:
-        t = Thread(target=check_loop, args=(handler,))
+        t = EmailThread(handler, 20)
         t.start()
