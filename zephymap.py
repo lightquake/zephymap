@@ -11,23 +11,32 @@ from threading import Thread
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 
-def load_servers():
+def load_config():
+    """
+    Load handlers and other appropriate state.
+    Returns a dict of handler identifier -> EmailHandler object
+    """
+    # globals shared among all handlers
     global target_class
     global target
-    
+
     scp = ConfigParser.SafeConfigParser({"regex": ".*"})
+    
+    # bail on a bad read
     if (scp.read(os.path.expanduser(config_file)) == []):
         print "Failed to read config file at %s." % config_file
         sys.exit(1)
 
-    servers = {}
+    handlers = {}
 
     target = scp.get(global_section, "recipient")
     target_class = "MAIL"
     if scp.has_option(global_section, "class"):
         target_class = scp.get(global_section, "class")
 
-    for section in scp.sections(): # loop through accounts
+    # loop through each account
+    for section in scp.sections():
+        
         if section == global_section: continue # zephyr is for globals
         username = scp.get(section, "username")
         server = scp.get(section, "server")
@@ -35,49 +44,56 @@ def load_servers():
             password = scp.get(section, "password")
         else:
             password = getpass.getpass("Password for server %s, username %s: " % (server, username))
-        regex = scp.get(section, "regex")
+            
+        # determine whether to use ssl; defaults to yes
         # TODO: support other ports
-
-        # determine whether to use ssl
         ssl = True
         if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
             ssl = False
 
-        servers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, regex=regex)
+        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl)
 
-    return servers      
+    return handlers    
 
-def check_server(server):
-    print "Checking server %s at %s." % (server, time.asctime())
-    msgs = servers[server].check()
-    msg_groups = group_by_id(msgs, lambda x: x["Message-ID"])
+def check_handler(handler):
+    """
+    Check the handler with the given name and send zephyrs as appropriate.
+    """
+
+    print "Checking handler %s at %s." % (handler, time.asctime())
+    msgs = handlers[handler].check() # grab message headers
+    # some e-mail providers support tagging, resulting in dupe messages
+    # in folders. we only want to notify once, so we group by message ID.
+    msg_groups = group(msgs, lambda x: x["Message-ID"])
     n_mesgs = len(msg_groups)
     print "%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s")
     for msg_id in msg_groups:
         msg_group = msg_groups[msg_id]
         folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
         msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
-        instance_name = "%s.%s" % (server, folders) # gmail.INBOX
+        instance_name = "%s.%s" % (handler, folders) # e.g., Gmail.INBOX
         body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
         zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                        recipient=target, sender="zephymap", isPrivate=True).send()
-def check_loop(server):
+        
+def check_loop(handler):
     while True:
-        check_server(server)
+        check_handler(handler)
         time.sleep(20)
         
 
-def group_by_id(things, f):
+def group(things, f):
     f_dict = {}
-    for f_val in list(set(map(f, things))):
-        f_dict[f_val] = [thing for thing in things if f(thing) == f_val]
+    f_vals = list(set(map(f, things))) # unique values of f[thing]
+    for f_val in f_vals:
+        f_dict[f_val] = filter(lambda x: f(x) == f_val, things)
     return f_dict
 
 
 if __name__ == "__main__":
     zephyr.init()
-    servers = load_servers()
+    handlers = load_config()
 
-    for server in servers:
-        t = Thread(target=check_loop, args=(server,))
+    for handler in handlers:
+        t = Thread(target=check_loop, args=(handler,))
         t.start()
