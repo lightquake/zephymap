@@ -83,14 +83,21 @@ def load_config():
             password = getpass.getpass("Password for server %s, username %s: " % (server, username))
             
         # determine whether to use ssl; defaults to yes
-        # TODO: support other ports
+    
         ssl = True
         if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
             ssl = False
 
-        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s"
-                     % (section, server, username, ssl))
-        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl)
+        if scp.has_option(section, "port"):
+            port = scp.getint("port"):
+        elif ssl:
+            port = 993
+        else:
+            port = 143
+
+        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d."
+                     % (section, server, username, ssl, port))
+        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, port)
 
     return handlers    
         

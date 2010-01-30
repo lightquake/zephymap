@@ -35,7 +35,8 @@ note that SSL will default to being enabled. option names are case-insensitive,
 but the special section zephyr must be capitalized as such. there is also the
 optional class setting in the zephyr section, which configures the class that you
 will receive mail in. It defaults to MAIL. Omitted password fields will prompt
-you each time you startup; useful for the security-conscious.
+you each time you startup; useful for the security-conscious. The port option
+can be used to specify a non-standard (993 for SSL, 143 for non-SSL) port.
 
 The regex option in the zephyr section will be matched against the entire folder name;
 depending on your IMAP server, subfolders may be separated with /, ., or something
