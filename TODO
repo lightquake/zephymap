@@ -1,11 +1,11 @@
 Todo for 0.1
 
 * Regex inclusive/exclusive filtering
-* Proper error logging
 * Redo README
 * Configurable sleep timer
 * Support non-standard IMAP/SSL ports
 * Configurable verbosity
+
 Todo for 0.2
 
 * Daemonization
