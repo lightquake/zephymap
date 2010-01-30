@@ -45,6 +45,7 @@ config_file = "~/.zephymap.conf"
 global_section = "zephyr"
 logger = logging.getLogger("zephymap")
 logger.setLevel(logging.DEBUG)
+default_interval = 20
 
 def load_config():
     """
@@ -54,6 +55,7 @@ def load_config():
     # globals shared among all handlers
     global target_class
     global target
+    global default_interval
 
     scp = ConfigParser.SafeConfigParser({"regex": ".*"})
 
@@ -69,6 +71,9 @@ def load_config():
     target_class = "MAIL"
     if scp.has_option(global_section, "class"):
         target_class = scp.get(global_section, "class")
+
+    if scp.has_option(global_section, "interval"):
+        default_interval = scp.getint(global_section, "interval")
 
     # loop through each account
     for section in scp.sections():
@@ -89,15 +94,22 @@ def load_config():
             ssl = False
 
         if scp.has_option(section, "port"):
-            port = scp.getint("port"):
+            port = scp.getint("port")
         elif ssl:
             port = 993
         else:
             port = 143
 
-        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d."
-                     % (section, server, username, ssl, port))
-        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, port)
+        if scp.has_option(section, "interval"):
+            interval = scp.getint(section, "interval")
+        else:
+            interval = default_interval
+
+        interval = max(interval, 10) # don't want to be constantly checking.
+        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d, interval %d."
+                     % (section, server, username, ssl, port, interval))
+        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, port=port)
+        handlers[section].interval = interval
 
     return handlers    
         
@@ -126,5 +138,5 @@ if __name__ == "__main__":
     handlers = load_config()
 
     for name in handlers:
-        t = EmailThread(handlers[name], name, 20)
+        t = EmailThread(handlers[name], name, handlers[name].interval)
         t.start()
