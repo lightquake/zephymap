@@ -7,6 +7,7 @@ import zephyr
 import time
 import getpass
 from threading import Thread
+import logging
 
 class EmailThread(Thread):
     def __init__(self, handler, interval=20):
@@ -21,6 +22,8 @@ class EmailThread(Thread):
 
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
+logger = logging.getLogger("zephymap")
+logger.setLevel(logging.DEBUG)
 
 def load_config():
     """
@@ -32,8 +35,9 @@ def load_config():
     global target
 
     scp = ConfigParser.SafeConfigParser({"regex": ".*"})
-    
+
     # bail on a bad read
+    logger.info("Loading config.")
     if (scp.read(os.path.expanduser(config_file)) == []):
         print "Failed to read config file at %s." % config_file
         sys.exit(1)
@@ -47,8 +51,9 @@ def load_config():
 
     # loop through each account
     for section in scp.sections():
-        
         if section == global_section: continue # zephyr is for globals
+        
+        logger.info("Parsing section %s." % section)
         username = scp.get(section, "username")
         server = scp.get(section, "server")
         if scp.has_option(section, "password"):
@@ -62,6 +67,8 @@ def load_config():
         if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
             ssl = False
 
+        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s"
+                     % (section, server, username, ssl))
         handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl)
 
     return handlers    
@@ -71,13 +78,13 @@ def check_handler(handler):
     Check the handler with the given name and send zephyrs as appropriate.
     """
 
-    print "Checking handler %s at %s." % (handler, time.asctime())
+    logger.info("Checking handler %s at %s." % (handler, time.asctime()))
     msgs = handlers[handler].check() # grab message headers
     # some e-mail providers support tagging, resulting in dupe messages
     # in folders. we only want to notify once, so we group by message ID.
     msg_groups = group(msgs, lambda x: x["Message-ID"])
     n_mesgs = len(msg_groups)
-    print "%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s")
+    logger.info("%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s"))
     for msg_id in msg_groups:
         msg_group = msg_groups[msg_id]
         folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
@@ -97,6 +104,11 @@ def group(things, f):
 
 
 if __name__ == "__main__":
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    logger.addHandler(ch)
+
     zephyr.init()
     handlers = load_config()
 
