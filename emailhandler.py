@@ -97,6 +97,8 @@ class EmailHandler:
                 logger.warning("SSL bug in server %s at %s." % (self.server, time.asctime()))
             elif isinstance(e, imaplib.IMAP4.abort):
                 logger.warning("abort bug in server %s at %s." % (self.server, time.asctime()))
+
+            # Try it again
             return self.check()
             
             
