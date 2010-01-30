@@ -67,16 +67,19 @@ class EmailHandler:
                 # XXX: large number is because * will always return the last message
                 throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
                 if new == ['']: continue # skip all-read folders
-                logger.info("Checking folder %s on server." % (folder, self.server))
+                logger.info("Checking folder %s on server %s." % (folder, self.server))
 
                 indices = new[0].replace(' ', ',') # it gives me '2 3 4', but it requires '2,3,4'. god I hate IMAP.
 
+                logger.info("Found %d message%s in folder %s." % (len(indices), "" if len(indices) == 1 else "s",
+                                                                  self.server))
+                
                 # for some reason, I get )s mixed in with actual header/response pair information.
                 new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
                 for new_header in new_headers: new_header["folder"] = folder # tag with folder information
                 headers += new_headers
                 uid_text = self.imap.fetch(nmesgs, "UID")[1][0] # mark that we read the UID
-                self.last_uid[folder] =  int(re.search("\(UID (\d+)\)", uid_text).group(1))
+                self.last_uid[folder] = int(re.search("\(UID (\d+)\)", uid_text).group(1))
                 
         except (imaplib.IMAP4.abort, sslerror), e:
             # Okay. There's this stupid bug in the SSL library that I don't feel like finding the cause of
