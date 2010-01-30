@@ -10,15 +10,32 @@ from threading import Thread
 import logging
 
 class EmailThread(Thread):
-    def __init__(self, handler, interval=20):
-        Thread.__init__(self)
+    def __init__(self, handler, name, interval=20):
+        Thread.__init__(self, name=name)
         self.handler = handler
         self.interval = interval
 
     def run(self):
         while True:
-            check_handler(self.handler)
+            self.check()
             time.sleep(self.interval)
+
+    def check(self):
+        msgs = self.handler.check() # grab message headers
+        # some e-mail providers support tagging, resulting in dupe messages
+        # in folders. we only want to notify once, so we group by message ID.
+        msg_groups = group(msgs, lambda x: x["Message-ID"])
+        n_mesgs = len(msg_groups)
+        logger.info("%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s"))
+        for msg_id in msg_groups:
+            msg_group = msg_groups[msg_id]
+            folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
+            msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
+            instance_name = "%s.%s" % (self.getName(), folders) # e.g., Gmail.INBOX
+            body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
+            zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
+                           recipient=target, sender="zephymap", isPrivate=True).send()
+        
 
 config_file = "~/.zephymap.conf"
 global_section = "zephyr"
@@ -72,27 +89,6 @@ def load_config():
         handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl)
 
     return handlers    
-
-def check_handler(handler):
-    """
-    Check the handler with the given name and send zephyrs as appropriate.
-    """
-
-    logger.info("Checking handler %s at %s." % (handler, time.asctime()))
-    msgs = handlers[handler].check() # grab message headers
-    # some e-mail providers support tagging, resulting in dupe messages
-    # in folders. we only want to notify once, so we group by message ID.
-    msg_groups = group(msgs, lambda x: x["Message-ID"])
-    n_mesgs = len(msg_groups)
-    logger.info("%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s"))
-    for msg_id in msg_groups:
-        msg_group = msg_groups[msg_id]
-        folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
-        msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
-        instance_name = "%s.%s" % (handler, folders) # e.g., Gmail.INBOX
-        body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
-        zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
-                       recipient=target, sender="zephymap", isPrivate=True).send()
         
 
 def group(things, f):
@@ -111,7 +107,6 @@ if __name__ == "__main__":
 
     zephyr.init()
     handlers = load_config()
-
-    for handler in handlers:
-        t = EmailThread(handler, 20)
+    for name in handlers:
+        t = EmailThread(handlers[name], name, 20)
         t.start()
