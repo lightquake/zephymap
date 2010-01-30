@@ -14,6 +14,7 @@ class EmailThread(Thread):
         Thread.__init__(self, name=name)
         self.handler = handler
         self.interval = interval
+        self.logger = logging.getLogger("zephymap.%s" % name)
 
     def run(self):
         while True:
@@ -21,6 +22,8 @@ class EmailThread(Thread):
             time.sleep(self.interval)
 
     def check(self):
+        logger = self.logger
+        logger.info("Checking for messages.")
         msgs = self.handler.check() # grab message headers
         # some e-mail providers support tagging, resulting in dupe messages
         # in folders. we only want to notify once, so we group by message ID.
@@ -33,6 +36,7 @@ class EmailThread(Thread):
             msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
             instance_name = "%s.%s" % (self.getName(), folders) # e.g., Gmail.INBOX
             body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
+            logger.info("Sending notification to instance %s, subject %s." % (instance_name, msg["Subject"]))
             zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                            recipient=target, sender="zephymap", isPrivate=True).send()
         
@@ -102,11 +106,17 @@ def group(things, f):
 if __name__ == "__main__":
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
-    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+
+    # strictly, I should pad to the longest thread name length, but that would require me to
+    # know that information before I print anything out, and I want to print when I'm loading
+    # a config file.
+    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)5s - %(message)s"))
     logger.addHandler(ch)
 
+    logger.info("Initializing zephyr.")
     zephyr.init()
     handlers = load_config()
+
     for name in handlers:
         t = EmailThread(handlers[name], name, 20)
         t.start()
