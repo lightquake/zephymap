@@ -3,6 +3,11 @@ import imaplib, email.utils, email, calendar, time
 import re
 from socket import sslerror
 from sys import stderr
+import logging
+
+logger = logging.getLogger("emailhandler")
+logger.setLevel(logging.DEBUG)
+logger.info("f")
 
 class EmailHandler:
     def __init__(self, server, username, password, port=None, use_ssl=False):
@@ -62,7 +67,7 @@ class EmailHandler:
                 # XXX: large number is because * will always return the last message
                 throwaway, new = self.imap.search(None, 'UNSEEN', "(UID %d:99999999)" % (self.last_uid[folder] + 1))
                 if new == ['']: continue # skip all-read folders
-                print "Checking folder %s at %s." % (folder, time.asctime())
+                logger.info("Checking folder %s on server." % (folder, self.server))
 
                 indices = new[0].replace(' ', ',') # it gives me '2 3 4', but it requires '2,3,4'. god I hate IMAP.
 
@@ -88,9 +93,9 @@ class EmailHandler:
             self.imap.login(self.username, self.password)
             
             if isinstance(e, sslerror):
-                print >> stderr, "SSL bug in server %s at %s." % (self.server, time.asctime())
+                logger.warning("SSL bug in server %s at %s." % (self.server, time.asctime()))
             elif isinstance(e, imaplib.IMAP4.abort):
-                print >> stderr, "abort bug in server %s at %s." % (self.server, time.asctime())
+                logger.warning("abort bug in server %s at %s." % (self.server, time.asctime()))
             return self.check()
             
             

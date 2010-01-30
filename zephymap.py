@@ -104,6 +104,7 @@ def group(things, f):
 
 
 if __name__ == "__main__":
+    root_logger = logging.getLogger()
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
 
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     # know that information before I print anything out, and I want to print when I'm loading
     # a config file.
     ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)5s - %(message)s"))
-    logger.addHandler(ch)
+    root_logger.addHandler(ch)
 
     logger.info("Initializing zephyr.")
     zephyr.init()
