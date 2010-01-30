@@ -69,12 +69,11 @@ class EmailHandler:
                 logger.info("Checking folder %s on server %s." % (folder, self.server))
 
                 indices = new[0].replace(' ', ',') # it gives me '2 3 4', but it requires '2,3,4'. god I hate IMAP.
-
-                logger.info("Found %d message%s in folder %s." % (len(indices), "" if len(indices) == 1 else "s",
-                                                                  self.server))
                 
                 # for some reason, I get )s mixed in with actual header/response pair information.
                 new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
+                logger.info("Found %d message%s in folder %s on server %s." % (len(new_headers), "" if len(indices) == 1 else "s",
+                                                                  folder, self.server))
                 for new_header in new_headers: new_header["folder"] = folder # tag with folder information
                 headers += new_headers
                 uid_text = self.imap.fetch(nmesgs, "UID")[1][0] # mark that we read the UID
