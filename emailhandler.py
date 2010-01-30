@@ -72,7 +72,7 @@ class EmailHandler:
                 
                 # for some reason, I get )s mixed in with actual header/response pair information.
                 new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
-                logger.info("Found %d message%s in folder %s on server %s." % (len(new_headers), "" if len(indices) == 1 else "s",
+                logger.info("Found %d message%s in folder %s on server %s." % (len(new_headers), "" if len(new_headers) == 1 else "s",
                                                                   folder, self.server))
                 for new_header in new_headers: new_header["folder"] = folder # tag with folder information
                 headers += new_headers
