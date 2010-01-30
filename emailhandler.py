@@ -7,7 +7,6 @@ import logging
 
 logger = logging.getLogger("emailhandler")
 logger.setLevel(logging.DEBUG)
-logger.info("f")
 
 class EmailHandler:
     def __init__(self, server, username, password, port=None, use_ssl=False):
