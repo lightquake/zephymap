@@ -9,7 +9,7 @@ logger = logging.getLogger("emailhandler")
 logger.setLevel(logging.DEBUG)
 
 class EmailHandler:
-    def __init__(self, server, username, password, port=None, use_ssl=False):
+    def __init__(self, server, username, password, port=None, use_ssl=False, include=".*", exclude="^$"):
         self.server = server
         if not port: # default ports
             if use_ssl: self.port = 993
@@ -21,6 +21,9 @@ class EmailHandler:
         self.username = username
         self.password = password
         self.imap.login(self.username, self.password)
+
+        self.include = re.compile(include)
+        self.exclude = re.compile(exclude)
         self.set_last_uids()
         
         
@@ -47,11 +50,13 @@ class EmailHandler:
         """
         # folders are indicated like (\\HasNoChildren) "." "INBOX.Foo"; we just want INBOX.Foo.
         # that middle thing is a separator, which we can ignore since we don't care about nesting.
-        folder_re = re.compile(r'\(.*?\) ".*" (?P<name>.*)')
-        folders = [folder_re.match(f_str).groups()[0].strip('"')
-                for f_str in self.imap.list()[1]]
-        return folders
-    
+        folder_re = re.compile(r'\(.*?\) "(?P<sep>.*)" (?P<name>.*)')
+        matches = [folder_re.match(f_str).groups() for f_str in self.imap.list()[1]]
+        canonical_folders = [match[1].strip('"').replace(match[0], "/") for match in matches]
+        matching_folders = [folder for folder in canonical_folders
+                            if self.include.search(folder) and not self.exclude.search(folder)]
+        return matching_folders
+
     def check(self):
         """
         Check for messages received since the last check.
@@ -73,7 +78,7 @@ class EmailHandler:
                 # for some reason, I get )s mixed in with actual header/response pair information.
                 new_headers = [email.message_from_string(x[1]) for x in self.imap.fetch(indices, "(BODY[HEADER])")[1] if x != ')']
                 logger.info("Found %d message%s in folder %s on server %s." % (len(new_headers), "" if len(new_headers) == 1 else "s",
-                                                                  folder, self.server))
+                                                                               folder, self.server))
                 for new_header in new_headers: new_header["folder"] = folder # tag with folder information
                 headers += new_headers
                 uid_text = self.imap.fetch(nmesgs, "UID")[1][0] # mark that we read the UID
