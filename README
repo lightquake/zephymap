@@ -13,7 +13,7 @@ kill zephymap. The proper signal to send zephymap is SIGQUIT (Ctrl-\).
 
 
 INSTALLING LIBRARIES
-=============================================================================
+================================================================================
 zephymap requires python-zephyr in order to send notifications, which requires
 libzephyr-dev, which may or may not require comerr-dev. libzephyr-dev is known
 to work on linerva, and is in the Ubuntu/Debian repositories.
@@ -40,8 +40,8 @@ To install python-zephyr:
    
    http://github.com/ebroder/python-zephyr/downloads
 
-   and unpack the archive, or (if you feel like using the development version) clone
-   the git repo by running:
+   and unpack the archive, or (if you feel like using the development version)
+   clone the git repo by running:
    
    git clone git://github.com/ebroder/python-zephyr.git
 
@@ -55,7 +55,7 @@ To install python-zephyr:
    2. This should install python-zephyr.
 
 INSTALLING ZEPHYMAP
-==============================================================================
+================================================================================
 zephymap itself requires no special setup.
 
 1. Create a directory into which to download zephymap.
@@ -83,7 +83,8 @@ zephymap itself requires no special setup.
 
    will do this, where 'me' is replaced with your username.
 
-# zephymap config
+CONFIGURATION
+================================================================================
 zephymap reads from a config file in your home directory named ".zephymap.conf".
 This file must be of the following format:
 
@@ -102,38 +103,56 @@ The [mailbox] section names (the string inside the []) should contain a short
 meaningful name for the mail server it defines. This will appear in the
 instance of zephyrs sent by zephymap.
 
-The [zephyr] section has the following (case sensitive) options:
+The [zephyr] section has the following (case sensitive) options and must be
+named such:
+
 recipient   The zephyr user to whom zephymap should make the zephyrs readable.
+
 class       The class to which zephymap will send mail notification zephyrs.
             This is the class to which the user identified in "recipient" will
             need to be subscribed in order to see the zephyrs. The default is
             "MAIL".
 
-Each IMAP [mailbox] section has the following (case-insensitive) options:
+Each IMAP [mailbox] section has the following (caseinsensitive) options:
+
 server      The URI of the IMAP server (e.g., "imap.gmail.com" for Gmail and
             "imap.exchange.mit.edu" for MIT's Exchange email server)
+
 username    The username for the account on the indicated server.
+
 password    The password for the account on the indicated server. Leaving this
-            option out or leaving it blank will cause zephymap to prompt you to
-            input your password at startup. This is the suggested behaviour for
-            the security concious.
-interval    An interval value in seconds that indicates the time to wait
-            between checking the mailbox for new messages. It cannot be set less
-            than 10 seconds. The default is 20 seconds.
+            option out will cause zephymap to prompt you to input your password
+            at startup. This is the suggested behaviour for the security
+            concious.
+
+interval    An interval value in seconds that indicates the time to wait between
+            checking the mailbox for new messages. It cannot be set less than 10
+            seconds. The default is 20 seconds.
+
 ssl         A boolean value that indicates whether or not the server utilizes
             ssl. Default is true.
-port        An integer value that indicates the port to be used to access the
-            IMAP server. The default for an SSL server is 993, and the default
-            for a non-SSL server is 143.
+
+port        An integer value that indicates the port to be used to access the IMAP
+            server. The default for an SSL server is 993, and the default for a
+            non-SSL server is 143.
+
 include     A semi-colon separated list of folder names to be included. If left
             blank, the default is all folders. Subfolders can be included by
-            indicating "folder/subfolder".
+            indicating "folder/subfolder"; for example,
+
+            MIT/SIPB; zephymap; INBOX
+
+            Note that spaces in the middle of folder names are important, but
+            spaces at the beginning or end are not.
+
+
 exclude     A semi-colon separated list of folder names to be excluded even if
-            they exist in the include list. The default is exclude none. Syntax
+            they exist in the include list. The default is to exclude none. Syntax
             is identical to that of the "include" option.
-regex       A string option that overrides the functionallity of "include" and
-            "exclude". The option is expected to be a perl compliant regular
-            expressions and will be interpretted as such. Use this option only
-            if you are familiar with regular expressions.
+
+regex       A boolean option that causes include and exclude to interpret their
+            arguments as Perl-style regular expressions. Use this option only if
+            you are familiar with regular expressions. Note that the regex will
+            automatically be case-insensitive
 
 Contact Patrick at zephymap@mit.edu or on (MIT) zephyr via the zephymap class.
