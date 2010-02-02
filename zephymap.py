@@ -9,6 +9,7 @@ import getpass
 from threading import Thread
 import logging
 import re
+import getopt
 
 class EmailThread(Thread):
     def __init__(self, handler, name, interval=20):
@@ -151,12 +152,17 @@ def clude_to_re(s):
 if __name__ == "__main__":
     root_logger = logging.getLogger()
     ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+
+    opts, args = getopt.getopt(sys.argv[1:], "vV")
+    ch.setLevel(logging.WARN)
+    for o, a in opts:
+        if o == "-v": ch.setLevel(logging.INFO)
+        elif o == "-V": ch.setLevel(logging.DEBUG)
 
     # strictly, I should pad to the longest thread name length, but that would require me to
     # know that information before I print anything out, and I want to print when I'm loading
     # a config file.
-    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)5s - %(message)s"))
+    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)8s - %(message)s"))
     root_logger.addHandler(ch)
 
     logger.info("Initializing zephyr.")
