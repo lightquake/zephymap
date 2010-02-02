@@ -11,6 +11,18 @@ import logging
 import re
 import getopt
 
+version = "0.1"
+config_file = "~/.zephymap.conf"
+global_section = "zephyr"
+logger = logging.getLogger("zephymap")
+logger.setLevel(logging.DEBUG)
+default_interval = 20
+usage = """
+usage: zephymap.py [-v|-V]
+must have a ~/.zephymap.conf file. 
+For configuration and installation instructions, see the README.
+"""
+
 class EmailThread(Thread):
     def __init__(self, handler, name, interval=20):
         Thread.__init__(self, name=name)
@@ -42,12 +54,6 @@ class EmailThread(Thread):
             zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                            recipient=target, sender="zephymap", isPrivate=True).send()
         
-
-config_file = "~/.zephymap.conf"
-global_section = "zephyr"
-logger = logging.getLogger("zephymap")
-logger.setLevel(logging.DEBUG)
-default_interval = 20
 
 def load_config():
     """
@@ -153,16 +159,30 @@ if __name__ == "__main__":
     root_logger = logging.getLogger()
     ch = logging.StreamHandler()
 
-    opts, args = getopt.getopt(sys.argv[1:], "vV")
     ch.setLevel(logging.WARN)
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "vV", ["help", "version"])
+    except getopt.GetoptError, e: # Unknown option passed
+        print str(e)
+        print usage
+        sys.exit(2)
     for o, a in opts:
         if o == "-v": ch.setLevel(logging.INFO)
         elif o == "-V": ch.setLevel(logging.DEBUG)
+        elif o == "--help":
+            print usage
+            sys.exit()
+        elif o == "--version":
+            print version
+            sys.exit()
+        else:
+            assert False, "unknown, unhandled option"
 
     # strictly, I should pad to the longest thread name length, but that would require me to
     # know that information before I print anything out, and I want to print when I'm loading
     # a config file.
-    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)8s - %(message)s"))
+    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)8\s - %(message)s"))
     root_logger.addHandler(ch)
 
     logger.info("Initializing zephyr.")
