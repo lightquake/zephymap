@@ -108,7 +108,7 @@ def load_config():
 
         interval = max(interval, 10) # don't want to be constantly checking.
 
-        if scp.has_opton(section, "include"):
+        if scp.has_option(section, "include"):
             include = scp.get(section, "include")
         else:
             include = ".*"
