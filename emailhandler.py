@@ -52,7 +52,7 @@ class EmailHandler:
         # that middle thing is a separator, which we can ignore since we don't care about nesting.
         folder_re = re.compile(r'\(.*?\) "(?P<sep>.*)" (?P<name>.*)')
         matches = [folder_re.match(f_str).groups() for f_str in self.imap.list()[1]]
-        logger.debug("Found folders %s." % [match[1].strip() for match in matches])
+        logger.debug("Found folders %s." % [match[1].strip('"') for match in matches])
         canonical_folders = [match[1].strip('"').replace(match[0], "/") for match in matches]
         matching_folders = [folder for folder in canonical_folders
                             if self.include.search(folder) and not self.exclude.search(folder)]
