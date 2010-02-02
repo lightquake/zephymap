@@ -1,9 +1,19 @@
+Version 0.1
+----------------------------------------------
+* Added configuring sleep timers.
+* More robust debugging messages.
+* Allowed non-standard IMAP/SSL ports.
+* Reworked the README
+* Filtering checked folders, both by list and by regex.
+
 Version 0.0.3.4
 ----------------------------------------------
 * Correctly correctly handle the random abort bug.
+
 Version 0.0.3.3
 ----------------------------------------------
 * Correctly handle the random abort bug.
+
 Version 0.0.3.2
 ----------------------------------------------
 * Fix idiotic typo in README related to installing python-zephyr
