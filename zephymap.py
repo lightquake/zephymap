@@ -58,7 +58,7 @@ def load_config():
     global target
     global default_interval
 
-    scp = ConfigParser.SafeConfigParser({"regex": ".*"})
+    scp = ConfigParser.SafeConfigParser()
 
     # bail on a bad read
     logger.info("Loading config.")
@@ -108,32 +108,28 @@ def load_config():
 
         interval = max(interval, 10) # don't want to be constantly checking.
 
-        if scp.has_option(section, "include"):
-            include = scp.get(section, "include")
-        else:
-            include = ".*"
-
-        if scp.has_option(section, "exclude"):
-            exclude = scp.get(section, "exclude")
-        else:
-            exclude = "^$"
-
         if scp.has_option(section, "regex"):
             is_regex = scp.get(section, "regex")
         else:
             is_regex = False
 
-        if is_regex:
-            include_re = include
-            exclude_re = exclude
-        else:
-            include_re = clude_to_re(include)
-            exclude_re = clude_to_re(exclude)
-            
-        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d, interval %d."
-                     % (section, server, username, ssl, port, interval))
+        if scp.has_option(section, "include"):
+            include = scp.get(section, "include")
+            if is_regex: include_re = include
+            else: include_re = clude_to_re(include)
+        else: include_re = "^.*$"
+
+        if scp.has_option(section, "exclude"):
+            exclude = scp.get(section, "exclude")
+            if is_regex: exclude_re = exclude
+            else: exclude_re = clude_to_re(exclude)
+        else: exclude_re = "^$"
+
+        
+        logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d, interval %d, is_regex %s, include_re %s, exclude_re %s."
+                     % (section, server, username, ssl, port, interval, is_regex, include_re, exclude_re))
         handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl,
-                                         include=include, exclude=exclude)
+                                         include=include_re, exclude=exclude_re)
         handlers[section].interval = interval
 
     return handlers    
