@@ -22,8 +22,8 @@ class EmailHandler:
         self.password = password
         self.imap.login(self.username, self.password)
 
-        self.include = re.compile(include)
-        self.exclude = re.compile(exclude)
+        self.include = re.compile(include, re.I)
+        self.exclude = re.compile(exclude, re.I)
         self.set_last_uids()
         
         
@@ -52,9 +52,11 @@ class EmailHandler:
         # that middle thing is a separator, which we can ignore since we don't care about nesting.
         folder_re = re.compile(r'\(.*?\) "(?P<sep>.*)" (?P<name>.*)')
         matches = [folder_re.match(f_str).groups() for f_str in self.imap.list()[1]]
+        logger.debug("Found folders %s." % matches)
         canonical_folders = [match[1].strip('"').replace(match[0], "/") for match in matches]
         matching_folders = [folder for folder in canonical_folders
                             if self.include.search(folder) and not self.exclude.search(folder)]
+        logger.debug("Matched folders %s." % matching_folders)
         return matching_folders
 
     def check(self):
