@@ -8,6 +8,7 @@ import time
 import getpass
 from threading import Thread
 import logging
+import re
 
 class EmailThread(Thread):
     def __init__(self, handler, name, interval=20):
@@ -106,9 +107,33 @@ def load_config():
             interval = default_interval
 
         interval = max(interval, 10) # don't want to be constantly checking.
+
+        if scp.has_opton(section, "include"):
+            include = scp.get(section, "include")
+        else:
+            include = ".*"
+
+        if scp.has_option(section, "exclude"):
+            exclude = scp.get(section, "exclude")
+        else:
+            exclude = "^$"
+
+        if scp.has_option(section, "regex"):
+            is_regex = scp.get(section, "regex")
+        else:
+            is_regex = False
+
+        if is_regex:
+            include_re = include
+            exclude_re = exclude
+        else:
+            include_re = clude_to_re(include)
+            exclude_re = clude_to_re(exclude)
+            
         logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d, interval %d."
                      % (section, server, username, ssl, port, interval))
-        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl, port=port)
+        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl,
+                                         include=include, exclude=exclude)
         handlers[section].interval = interval
 
     return handlers    
@@ -121,6 +146,11 @@ def group(things, f):
         f_dict[f_val] = filter(lambda x: f(x) == f_val, things)
     return f_dict
 
+def clude_to_re(s):
+    elements = s.split(";")
+    regexified = [r'^%s(/.*)?' % re.escape(elem) for elem in elements]
+    return "|".join(regexified)
+    
 
 if __name__ == "__main__":
     root_logger = logging.getLogger()
