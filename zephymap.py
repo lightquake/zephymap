@@ -151,7 +151,7 @@ def group(things, f):
 
 def clude_to_re(s):
     elements = s.split(";")
-    regexified = [r'^%s(/.*)?' % re.escape(elem.strip()) for elem in elements]
+    regexified = [r'(^%s(/.*)?$)' % re.escape(elem.strip()) for elem in elements]
     return "|".join(regexified)
     
 
