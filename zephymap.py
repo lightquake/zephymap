@@ -182,7 +182,7 @@ if __name__ == "__main__":
     # strictly, I should pad to the longest thread name length, but that would require me to
     # know that information before I print anything out, and I want to print when I'm loading
     # a config file.
-    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)8\s - %(message)s"))
+    ch.setFormatter(logging.Formatter("%(asctime)s - %(name)20s - %(levelname)8s - %(message)s"))
     root_logger.addHandler(ch)
 
     logger.info("Initializing zephyr.")
