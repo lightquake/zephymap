@@ -1,8 +1,7 @@
-Todo for 0.1
+Todo for 0.1.1
 
-* Regex inclusive/exclusive filtering
-* Redo README
-* Configurable verbosity
+* Cleanup config file parsing code
+* Better command line options.
 
 Todo for 0.2
 
