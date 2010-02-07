@@ -44,12 +44,19 @@ class EmailThread(Thread):
         msg_groups = group(msgs, lambda x: x["Message-ID"])
         n_mesgs = len(msg_groups)
         logger.info("%d message%s." % (n_mesgs,  "" if n_mesgs == 1 else "s"))
+        
         for msg_id in msg_groups:
             msg_group = msg_groups[msg_id]
             folders = ','.join([msg["folder"] for msg in msg_group]) # all folders the message is in
             msg = msg_group[0] # the only difference is the folder, so 0 is as good as any
             instance_name = "%s.%s" % (self.getName(), folders) # e.g., Gmail.INBOX
-            body = "New mail from %s.\nSubject: %s" % (msg["From"], msg["Subject"])
+            body = """
+You have new mail in %s.
+
+From: %s
+Subject: %s
+To: %s
+""".strip() % (instance_name, msg["From"], msg["Subject"], msg["To"])
             logger.info("Sending notification to instance %s, subject %s." % (instance_name, msg["Subject"]))
             zephyr.ZNotice(cls=target_class, instance=instance_name, fields=[msg_id, body],
                            recipient=target, sender="zephymap", isPrivate=True).send()
