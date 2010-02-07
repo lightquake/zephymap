@@ -88,25 +88,33 @@ def load_config():
         if section == global_section: continue # zephyr is for globals
         
         logger.info("Parsing section %s." % section)
-        username = scp.get(section, "username")
-        server = scp.get(section, "server")
+        kwargs = {}
+        kwargs['username'] = username = scp.get(section, "username")
+        kwargs['server'] = server = scp.get(section, "server")
         if scp.has_option(section, "password"):
             password = scp.get(section, "password")
         else:
             password = getpass.getpass("Password for server %s, username %s: " % (server, username))
+
+        kwargs['password'] = password
             
         # determine whether to use ssl; defaults to yes
     
-        ssl = True
         if scp.has_option(section, "ssl") and not scp.getboolean(section, "ssl"):
             ssl = False
+            default_port = 143
+        else:
+            ssl = True
+            default_port = 993
+
+        kwargs['use_ssl'] = ssl
 
         if scp.has_option(section, "port"):
             port = scp.getint("port")
-        elif ssl:
-            port = 993
         else:
-            port = 143
+            port = default_port
+
+        kwargs['port'] = port
 
         if scp.has_option(section, "interval"):
             interval = scp.getint(section, "interval")
@@ -114,6 +122,7 @@ def load_config():
             interval = default_interval
 
         interval = max(interval, 10) # don't want to be constantly checking.
+
 
         if scp.has_option(section, "regex"):
             is_regex = scp.get(section, "regex")
@@ -132,11 +141,13 @@ def load_config():
             else: exclude_re = clude_to_re(exclude)
         else: exclude_re = "^$"
 
+        kwargs['include'] = include_re
+        kwargs['exclude'] = exclude_re
+
         
         logger.debug("Constructing handler for section %s: server %s, username %s, ssl %s, port %d, interval %d, is_regex %s, include_re %s, exclude_re %s."
                      % (section, server, username, ssl, port, interval, is_regex, include_re, exclude_re))
-        handlers[section] = EmailHandler(server=server, username=username, password=password, use_ssl=ssl,
-                                         include=include_re, exclude=exclude_re)
+        handlers[section] = EmailHandler(**kwargs)
         handlers[section].interval = interval
 
     return handlers    
