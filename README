@@ -62,12 +62,12 @@ zephymap itself requires no special setup.
 
 2. Download a copy, either from
 
-   http://github.com/veinor/zephymap/downloads
+   http://github.com/lightquake/zephymap/downloads
 
    or get the latest development build (not guaranteed to be stable or even
    work) via
 
-   git clone git://github.com/veinor/zephymap.git
+   git clone git://github.com/lightquake/zephymap.git
    
 3. Set up the ~/.zephymap.conf configuration file as described in the
    CONFIGURATION section
